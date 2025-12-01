@@ -61,6 +61,9 @@ export class FrameCanvas {
         background-color: var(--canvas-bg);
         touch-action: none;
       }
+      .fc-viewport:focus-visible {
+        outline-offset: -2px;
+      }
 
       .fc-canvas {
         position: absolute;
@@ -168,6 +171,7 @@ export class FrameCanvas {
       "div",
       [
         className("fc-viewport"),
+        attr("tabindex", "0"),
         // Some UA defaults to passive (breaking but they did it anyway).
         // This component prevents every native wheel behavior on it.
         on("wheel", this.#onWheel, { passive: false }),
@@ -800,7 +804,8 @@ export class FrameCanvas {
       !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "=", "-"].includes(
         ev.key,
       ) ||
-      ev.ctrlKey
+      !(this.#isViewportHovered || this.#focusIsInShadowRoot()) ||
+      ev.metaKey
     ) {
       return;
     }
@@ -850,6 +855,16 @@ export class FrameCanvas {
     } else {
       return this.#container.contains(activeElement);
     }
+  }
+
+  #focusIsInShadowRoot(): boolean {
+    const shadowRoot = this.#container.getRootNode();
+
+    if (!(shadowRoot instanceof ShadowRoot)) {
+      return false;
+    }
+
+    return !!shadowRoot.activeElement;
   }
 
   #onKeyDown = (ev: KeyboardEvent) => {
